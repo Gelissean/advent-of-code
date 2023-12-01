@@ -1,4 +1,4 @@
-input_file = "day1/input"
+input_file = "2023/1/input"
 
 with open(input_file, 'r') as i:
     values = []
