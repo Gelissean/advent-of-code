@@ -7,7 +7,7 @@ with open(input_file, 'r') as i:
         first = None
         last = None
         for c in line:
-            if c in ['0','1','2','3','4','5','6','7','8','9']:
+            if c in [str(digit) for digit in range(10)]:
                 if not first_set:
                     first = ord(c) - ord('0')
                     first_set = True
