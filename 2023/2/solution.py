@@ -7,6 +7,9 @@ class Config:
 
 
 class Round:
+    """Information about a single round of a game, initialized via part of an input line:\
+        0 red, 0 blue, 0 green"""
+
     def __init__(self, line: str) -> None:
         self.red_dice = 0
         self.green_dice = 0
@@ -32,12 +35,16 @@ class Round:
 
 
 class Game:
+    """Object holding game data, initialize using line from input: \
+    Game 0: 0 green, 0 red, 0 blue; 0 red; ..."""
+
     def __init__(self, line: str) -> None:
         parts = line.split(":")
         self.index = int(
             parts[0].split(" ")[-1].strip()
         )  # Game 123 split into ['Game','123'] and '123'>123
         self.legit = None
+        # split remaining string into separate rounds
         self.rounds = [Round(part.strip()) for part in parts[-1].split(";")]
         self.r_req = 0
         self.g_req = 0
@@ -47,6 +54,7 @@ class Game:
         self._set_power()
 
     def _validate(self) -> None:
+        """If any round of a game is not possible set legit to false"""
         for round in self.rounds:
             if (
                 round.red_dice > Config.red_max
@@ -58,6 +66,7 @@ class Game:
         self.legit = True
 
     def _set_power(self) -> None:
+        """Find minimal amount of dice to make game possible and multiply them"""
         for round in self.rounds:
             self.r_req = max(self.r_req, round.red_dice)
             self.g_req = max(self.g_req, round.green_dice)
