@@ -4,6 +4,8 @@ class Config:
     y_size = None
     null_characters = ["."]
     masking_character = "x"
+    gear_character = "*"
+    gear_number_count = 2
 
 
 class Cell:
@@ -16,16 +18,36 @@ class Part:
         self.positions = []
         self.valid = False
         self.cells = cells
+        self.symbol = None
 
     def assign_number(self, number: int, position: tuple) -> None:
         self.numbers.append(number)
         self.positions.append(position)
 
-    def set_validity(self, validity: bool) -> None:
-        self.valid = validity
+    def set_validity(self, symbol: str) -> None:
+        self.valid = (
+            True
+            if symbol not in Config.null_characters and not symbol.isdigit()
+            else False
+        )
+        self.symbol = symbol
 
     def get_value(self) -> int:
         return sum(self.numbers) * self.valid
+
+    def is_gear(self) -> bool:
+        return (
+            True
+            if self.symbol == Config.gear_character
+            and len(self.numbers) == Config.gear_number_count
+            else False
+        )
+
+    def get_gear_value(self):
+        prod = 1
+        for number in self.numbers:
+            prod *= number
+        return prod if self.is_gear() else 0
 
     def __str__(self) -> str:
         return f"Part: {'valid' if self.valid else 'invalid'} | numbers : {self.numbers}, pos:{self.positions}"
@@ -149,7 +171,7 @@ class Grid:
                     built_number = 10 * built_number + ord(c) - ord("0")
                 else:
                     # is special symbol
-                    building_part.set_validity(True)
+                    building_part.set_validity(c)
                     # if we have a special number and were building a number 12*34
                     if is_building_number and building_part is not None:
                         building_part.assign_number(
@@ -209,6 +231,9 @@ def main():
         print(f"Legit parts: {len(legit_parts)}")
         part_values = [part.get_value() for part in p.grid.parts]
         print(sum(part_values))
+        print("------")
+        print("Gears:")
+        print(sum([part.get_gear_value() for part in p.grid.parts]))
 
 
 if __name__ == "__main__":
