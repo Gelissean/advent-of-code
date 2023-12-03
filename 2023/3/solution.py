@@ -215,24 +215,8 @@ class Problem:
 def main():
     with open(Config.input_filename) as i:
         p = Problem(i.readlines())
-        map = p.grid.grid_map()
-        print(map)
-        with open("output", "w") as o:
-            o.write(map)
-        print(f"Number of parts: {len(p.grid.parts)}")
-        print("--------")
-        print("Printing out parts:")
-        for part in p.grid.parts:
-            print(part)
-        print("--------")
-        legit_parts = []
-        for part in p.grid.parts:
-            legit_parts.append(part) if part.valid else None
-        print(f"Legit parts: {len(legit_parts)}")
         part_values = [part.get_value() for part in p.grid.parts]
         print(sum(part_values))
-        print("------")
-        print("Gears:")
         print(sum([part.get_gear_value() for part in p.grid.parts]))
 
 
