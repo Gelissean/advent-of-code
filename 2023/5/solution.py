@@ -78,25 +78,25 @@ class Almanac:
 class AlmanacCacheLess(Almanac):
     class Numbers:
         def __init__(self, numbers: [int]) -> None:
-            self.destination, self.source, self.size = [
-                int(number) for number in numbers.split(" ")
-            ]
+            self.destination, self.source, self.size = numbers
 
     def _mapping_function(self, key: str, line: str) -> None:
         subject = self.__getattribute__(key)
-        subject[len(subject.keys())] = AlmanacCacheLess.Numbers(line)
+        subject[len(subject.keys())] = AlmanacCacheLess.Numbers([int(number) for number in line.split(' ')])
 
     def find(self, seed: int) -> int:
         values = []
-        for i in range(len(Almanac.subjects.keys())):
+        for i in range(len(AlmanacCacheLess.subjects.keys())):
             subject = self.__getattribute__(
-                Almanac.subjects[list(Almanac.subjects.keys())[i]]
+                AlmanacCacheLess.subjects[list(AlmanacCacheLess.subjects.keys())[i]]
             )
             if len(values) == 0:
                 values.append(self._get_value(seed, subject))
             else:
                 values.append(self._get_value(values[-1], subject))
-        print(self._format_output(seed, values)) if Almanac.is_printing else None
+        print(
+            self._format_output(seed, values)
+        ) if AlmanacCacheLess.is_printing else None
         return values[-1]
 
     def _get_value(self, input_value: int, subject: dict) -> int:
@@ -111,6 +111,7 @@ class AlmanacCacheLess(Almanac):
 
 class AlmanacCacheLessSeedRange(AlmanacCacheLess):
     is_printing_progress = Config.print_progress
+
     class SeedRange:
         def __init__(self, seed_source, seed_size) -> None:
             self.source = seed_source
@@ -124,12 +125,87 @@ class AlmanacCacheLessSeedRange(AlmanacCacheLess):
 
     def get_closest_seed(self) -> int:
         min_loc = 999999999
-        for seed_range in self.seeds:
-            print(f"Testing range: {seed_range.source} | {seed_range.size}")
-            seed_range: AlmanacCacheLessSeedRange.SeedRange
-            for seed in range(seed_range.source, seed_range.source + seed_range.size):
-                min_loc = min(min_loc, self.find(seed))
+        for seed in self.seeds:
+            min_loc = min(min_loc, self.find(seed))
         return min_loc
+
+    def __init__(self, lines: [str]) -> None:
+        super().__init__(lines)
+        self._intersect_ranges()
+
+    def _intersect_ranges(self) -> None: # TODO
+        subjects = ["seeds"] + [
+            AlmanacCacheLessSeedRange.subjects[key]
+            for key in AlmanacCacheLessSeedRange.subjects.keys()
+        ]
+        subjects = subjects[::-1]
+        previous_subject: dict = None
+        actual_subject: dict = None
+        for subject in subjects:
+            # seeds is a list, not a dict, has to be converted
+            if subject == 'seeds':
+                actual_subject = {}
+                for i in range(len(self.__getattribute__(subject))):
+                    s_r:AlmanacCacheLessSeedRange.SeedRange = self.__getattribute__(subject)[i]
+                    actual_subject[i] = AlmanacCacheLessSeedRange.Numbers([s_r.source, s_r.source, s_r.size])
+            else:
+                actual_subject = self.__getattribute__(subject)
+            if previous_subject != None:
+                # do the intersection
+                # 15 - 51 cuts into 50 - 97 and splits it into 50 - 51 and 52 - 97
+                # 52 - 53 doesnt cut into 50 - 97 / 52-97
+                for prev_key in previous_subject.keys():
+                    prev_range: AlmanacCacheLessSeedRange.Numbers = previous_subject[
+                        prev_key
+                    ]
+                    new_ranges = []
+                    pop_ranges = []
+                    for actual_key in actual_subject.keys():
+                        actual_range: AlmanacCacheLessSeedRange.Numbers = (
+                            actual_subject[actual_key]
+                        )
+                        # 5-10 to 7-12 intersects
+                        # 5-12 to 7-12 covers (ignore)
+                        # 7-15 to 7-12 covers (ignore)
+                        # 7-12 to 7-12 covers (ignore)
+                        # 10-15 to 7-12 intersects but can be ignored,
+                        # only lower number from interval needs to be checked
+                        if (
+                            prev_range.source < actual_range.destination
+                            and prev_range.source + prev_range.size - 1
+                            >= actual_range.destination
+                            and prev_range.source + prev_range.size - 1
+                            < actual_range.destination + actual_range.size - 1
+                        ):
+                            pivot_point = prev_range.source + prev_range.size
+                            smaller_size = pivot_point - actual_range.source
+                            smaller_range = AlmanacCacheLessSeedRange.Numbers(
+                                [
+                                    actual_range.destination,
+                                    actual_range.source,
+                                    smaller_size,
+                                ]
+                            )
+                            larger_range = AlmanacCacheLessSeedRange.Numbers(
+                                [
+                                    actual_range.destination + smaller_size,
+                                    actual_range.source + smaller_size,
+                                    actual_range.size - smaller_size,
+                                ]
+                            )
+                            pop_ranges.append(actual_key)
+                            last_index = list(actual_subject.keys())[-1]
+                            new_ranges.append([last_index + 1, smaller_range])
+                            new_ranges.append([last_index + 2, larger_range])
+                    for new_range in new_ranges:
+                        index, number_range = new_range
+                        actual_subject[index] = number_range
+                    for index in pop_ranges:
+                        actual_subject.pop(index)
+            previous_subject = actual_subject
+        self.seeds = [actual_subject[key].source for key in actual_subject.keys()]
+        print(subjects)
+        print(self.seeds)
 
 
 def main() -> None:
@@ -142,7 +218,7 @@ def main() -> None:
         print(min(locations))
 
         almanac2 = AlmanacCacheLessSeedRange(lines)
-        print(almanac2.get_closest_seed())
+        # print(almanac2.get_closest_seed())
 
 
 if __name__ == "__main__":
