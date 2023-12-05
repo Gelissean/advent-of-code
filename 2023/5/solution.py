@@ -1,6 +1,7 @@
 class Config:
     input_filename = "2023/5/input"
-    print_location_strings = True
+    print_location_strings = False
+    print_progress = True
 
 
 class Almanac:
@@ -29,7 +30,7 @@ class Almanac:
 
     def _evaluate(self, lines: [str]) -> None:
         line = lines.pop(0)
-        self.seeds = [int(seed) for seed in line.split(":")[-1].strip().split(" ")]
+        self._get_seeds(line.split(":")[-1].strip())
         subject = None
         for line in lines:
             line = line.strip()
@@ -43,6 +44,9 @@ class Almanac:
                 )
             else:
                 self._mapping_function(subject, line)
+
+    def _get_seeds(self, seed_line: str) -> None:
+        self.seeds = [int(seed) for seed in seed_line.split(" ")]
 
     def _mapping_function(self, key: str, line: str) -> None:
         destination, source, size = [int(v) for v in line.split(" ")]
@@ -75,7 +79,7 @@ class AlmanacCacheLess(Almanac):
     class Numbers:
         def __init__(self, numbers: [int]) -> None:
             self.destination, self.source, self.size = [
-                int(number) for number in numbers.split(' ')
+                int(number) for number in numbers.split(" ")
             ]
 
     def _mapping_function(self, key: str, line: str) -> None:
@@ -105,14 +109,40 @@ class AlmanacCacheLess(Almanac):
         return value
 
 
+class AlmanacCacheLessSeedRange(AlmanacCacheLess):
+    is_printing_progress = Config.print_progress
+    class SeedRange:
+        def __init__(self, seed_source, seed_size) -> None:
+            self.source = seed_source
+            self.size = seed_size
+
+    def _get_seeds(self, seed_line: str) -> None:
+        seed_line_parts = seed_line.split(" ")
+        while len(seed_line_parts) >= 2:
+            source, size = int(seed_line_parts.pop(0)), int(seed_line_parts.pop(0))
+            self.seeds.append(AlmanacCacheLessSeedRange.SeedRange(source, size))
+
+    def get_closest_seed(self) -> int:
+        min_loc = 999999999
+        for seed_range in self.seeds:
+            print(f"Testing range: {seed_range.source} | {seed_range.size}")
+            seed_range: AlmanacCacheLessSeedRange.SeedRange
+            for seed in range(seed_range.source, seed_range.source + seed_range.size):
+                min_loc = min(min_loc, self.find(seed))
+        return min_loc
+
+
 def main() -> None:
     with open(Config.input_filename) as i:
         lines = i.readlines()
-        almanac = AlmanacCacheLess(lines)
+        almanac = AlmanacCacheLess(lines.copy())
         locations = []
         for seed in almanac.seeds:
             locations.append(almanac.find(seed))
         print(min(locations))
+
+        almanac2 = AlmanacCacheLessSeedRange(lines)
+        print(almanac2.get_closest_seed())
 
 
 if __name__ == "__main__":
