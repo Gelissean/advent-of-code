@@ -22,6 +22,7 @@ class Hand:
         self.type = None
         self.hand_raw = line_parts[0]
         self.hand_array = []
+        self.joker_value = 0
         self._assign_card_values(self.hand_raw)
         self._assign_hand_value()
 
@@ -37,6 +38,10 @@ class Hand:
     def _assign_hand_value(self) -> None:
         quantities = list(self.hand.values())
         quantities.sort(reverse=True)
+        if len(quantities) == 0:  # all J
+            quantities.append(5)
+        else:
+            quantities[0] += self.joker_value
         if quantities == [3, 2]:
             self.type = Hand.hand_strengths.index("Full house")
         elif quantities[0] == 5:
@@ -71,6 +76,21 @@ class Hand:
         return f"Hand: {self.hand_raw}, type strength: {self.type}"
 
 
+class Hand2(Hand):
+    strengths = ["J", "2", "3", "4", "5", "6", "7", "8", "9", "T", "Q", "K", "A"]
+
+    def _assign_card_values(self, hand: str) -> None:
+        self.hand = {}
+        for card in hand:
+            if card == "J":
+                self.joker_value += 1
+            elif card in self.hand:
+                self.hand[card] += 1
+            else:
+                self.hand[card] = 1
+            self.hand_array.append(Hand2.strengths.index(card))
+
+
 def main() -> None:
     with open(Config.input_filename) as i:
         lines = i.readlines()
@@ -78,12 +98,18 @@ def main() -> None:
         hands.sort()
         ranks = []
         for i in range(len(hands)):
-            print(hands[i]) if Config.print_hands else None
-            ranks.append((1+i)*hands[i].bid)
+           print(hands[i]) if Config.print_hands else None
+           ranks.append((1 + i) * hands[i].bid)
         print(ranks) if Config.print_hands else None
         print(sum(ranks))
-
-
+        hands2 = [Hand2(line) for line in lines]
+        hands2.sort()
+        ranks = []
+        for i in range(len(hands2)):
+            print(hands2[i]) if Config.print_hands else None
+            ranks.append((1 + i) * hands2[i].bid)
+        print(ranks) if Config.print_hands else None
+        print(sum(ranks))
 
 
 if __name__ == "__main__":
