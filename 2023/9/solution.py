@@ -1,5 +1,5 @@
 class Config:
-    input_filename = "2023/9/input2"
+    input_filename = "2023/9/input"
 
 
 def main() -> None:
@@ -11,7 +11,10 @@ def main() -> None:
     for line in lines:
         history = [int(a) for a in line.strip().split()]
         days.append(history)
-    results = []
+
+    # part 1
+    results1 = []
+    results2 = []
     for i in range(len(days)):
         history = days[i]
         calc = [history]
@@ -23,12 +26,18 @@ def main() -> None:
                     done = False
             if done:break
             calc.append([row[j+1] - row[j] for j in range(len(row)-1)])
-        result = 0
+        result1 = 0
+        result2 = 0
         for row in calc[::-1]:
-            result += row[-1]
+            result1 += row[-1]
+            result2 = row[0] - result2
 
-        results.append(result)
-    print(sum(results))
+        results1.append(result1)
+        results2.append(result2)
+        
+    print(sum(results1))
+    print(sum(results2))
+
 
 
 
