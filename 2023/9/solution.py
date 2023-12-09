@@ -1,5 +1,5 @@
 class Config:
-    input_filename = "2023/9/input"
+    input_filename = "2023/9/input2"
 
 
 def main() -> None:
@@ -24,12 +24,10 @@ def main() -> None:
             if done:break
             calc.append([row[j+1] - row[j] for j in range(len(row)-1)])
         result = 0
-        print(calc)
         for row in calc[::-1]:
             result += row[-1]
 
         results.append(result)
-    print(results)
     print(sum(results))
 
 
